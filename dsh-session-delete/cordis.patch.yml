@@ -1,0 +1,7 @@
+# dsh-session-delete bundle patch: one Host row plus the browser module
+# declared by package.json's `dsh.client`. The row mounts the HTTP routes and
+# the `delete_sessions` tool; the sidebar menu row and the Settings page come
+# from the Client half.
+- insert:
+    - id: dsh-session-delete
+      name: 'dsh-session-delete'

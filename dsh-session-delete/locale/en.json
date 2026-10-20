@@ -1,0 +1,6 @@
+{
+  "meta": {
+    "title": "Session Delete",
+    "description": "Permanently deletes any session from the sidebar menu and manages archived sessions in Settings."
+  }
+}

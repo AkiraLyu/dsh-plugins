@@ -1,0 +1,43 @@
+{
+  "name": "dsh-session-delete",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "description": "Permanently delete a Harness session from the sidebar menu, with an archived-session manager in Settings.",
+  "repository": {
+    "type": "git",
+    "url": "git+ssh://git@github.com/AkiraLyu/dsh-plugins.git",
+    "directory": "dsh-session-delete"
+  },
+  "exports": {
+    ".": "./index.js",
+    "./client": "./client.js",
+    "./locale/*.json": "./locale/*.json",
+    "./icon": "./icon.svg"
+  },
+  "files": [
+    "index.js",
+    "purge.js",
+    "client.js",
+    "cordis.patch.yml",
+    "locale/*.json",
+    "icon.svg",
+    "README.md"
+  ],
+  "icon": "./icon.svg",
+  "dsh": {
+    "bundle": {
+      "patch": "./cordis.patch.yml"
+    },
+    "client": {
+      "platform": "web",
+      "immediately": true,
+      "inject": [
+        "@deepseek-ai/dsh-client-locale",
+        "@deepseek-ai/dsh-client-ui-renderer",
+        "@deepseek-ai/dsh-client-ui-settings",
+        "@deepseek-ai/dsh-api-session-controller"
+      ]
+    }
+  }
+}
