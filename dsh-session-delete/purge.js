@@ -13,10 +13,12 @@
  *   registry-global archive set, and the registry-global pin set.
  *
  * Permanent deletion removes all four, so neither the sidebar list nor a
- * future reopen can resolve the Session again. Sessions opened in this process
- * are refused: their log is still owned by the live Session. Content-addressed
- * attachment objects are intentionally untouched: they are shared by every
- * Session and carry no Session identity of their own.
+ * future reopen can resolve the Session again. A Session open in this process
+ * can still be deleted: its log disappears while the live view keeps rendering
+ * from memory until it is switched away or the process restarts, and the
+ * confirmation dialog warns about that. Content-addressed attachment objects
+ * are intentionally untouched: they are shared by every Session and carry no
+ * Session identity of their own.
  *
  * The JSONL backend exposes no delete API, so this module locates the log
  * directory itself. It never trusts a computed directory blindly: when the
@@ -87,9 +89,9 @@ export async function listArchivedSessions(ctx) {
 /**
  * Permanently delete Sessions one at a time.
  *
- * Any stored Session is eligible, archived or not. A Session that is open in
- * this process, or that neither persistence nor the archive set knows, reports
- * a per-id failure and changes nothing for that id.
+ * Any stored Session is eligible, archived or not. A Session that neither
+ * persistence nor the archive set knows reports a per-id failure and changes
+ * nothing for that id.
  * @param ctx - the Host context whose services own the data.
  * @param requested - candidate Session ids (already normalized by the caller).
  * @param signal - optional cancellation between ids.
@@ -125,9 +127,6 @@ export async function deleteSessions(ctx, requested, signal) {
 async function deleteOne(ctx, id, signal) {
   signal?.throwIfAborted()
   const persistence = ctx.sessionPersistence
-  if (ctx.get('sessions')?.get(id) !== undefined || ctx.get('agents')?.get(id) !== undefined) {
-    throw new PurgeError('session_live', `session '${id}' is open in this process; close it before deleting`)
-  }
 
   let snapshot
   let unreadable = false

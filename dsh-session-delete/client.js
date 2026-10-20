@@ -33,6 +33,8 @@ window.__ModuleLoader__.load({
       'dialog.description':
         'The log, projection checkpoint, reminders, and workspace entry of “{title}” will be permanently deleted. This cannot be undone.',
       'dialog.keepAttachments': 'Shared attachment objects are kept.',
+      'dialog.inUse':
+        'This session is in use. Deleting it removes the log immediately; the open conversation can no longer save messages and may start failing. Switch to another session or restart the app afterwards.',
       heading: 'Archived sessions',
       intro:
         'Permanent deletion removes the session log, its projection checkpoint, its reminders, and its workspace entry. It cannot be undone. Attachment objects are shared by all sessions and are kept.',
@@ -53,7 +55,6 @@ window.__ModuleLoader__.load({
       'notice.partial': 'Deleted {deleted}; {failed} failed: {reason}',
       'notice.failed': 'Nothing was deleted: {reason}',
       'error.notFound': 'The session could not be found; nothing was deleted.',
-      'error.live': 'The session is in use. Close it and try again.',
       'error.logNotFound': 'The session log directory could not be located; nothing was deleted.',
       'error.incomplete': 'The session log is still readable after deletion. Try again.',
       'error.schedule': 'The session\u2019s reminders could not be removed. Try again.',
@@ -71,6 +72,8 @@ window.__ModuleLoader__.load({
       'dialog.title': '彻底删除会话？',
       'dialog.description': '将永久删除「{title}」的日志、投影检查点、关联提醒和工作区记录。此操作无法恢复。',
       'dialog.keepAttachments': '共享的附件对象会被保留。',
+      'dialog.inUse':
+        '该会话正在使用中。删除后日志会立即消失，当前对话将无法继续保存消息并可能开始报错；请切换到其他会话或重启应用后继续使用。',
       heading: '已归档会话',
       intro:
         '彻底删除会永久移除会话日志、投影检查点、与该会话关联的提醒以及对应的工作区记录，无法恢复。附件对象由全部会话共享，不会被删除。',
@@ -91,7 +94,6 @@ window.__ModuleLoader__.load({
       'notice.partial': '已删除 {deleted} 个，{failed} 个失败：{reason}',
       'notice.failed': '未删除任何会话：{reason}',
       'error.notFound': '找不到该会话，未删除任何内容。',
-      'error.live': '该会话正在使用中，请关闭后重试。',
       'error.logNotFound': '无法定位该会话的日志目录，未删除。',
       'error.incomplete': '删除后仍能读取到该会话的日志，请重试。',
       'error.schedule': '该会话的关联提醒未能删除，请重试。',
@@ -164,6 +166,7 @@ window.__ModuleLoader__.load({
 .asp-dialog-warning { display: flex; align-items: flex-start; gap: 10px; color: var(--dsw-alias-label-secondary); font-size: 14px; line-height: 22px; }
 .asp-dialog-warning p { margin: 0; }
 .asp-dialog-warning-icon { flex: none; display: inline-flex; margin-top: 2px; color: var(--dsw-alias-state-error-primary); }
+.asp-dialog-live { margin: 10px 0 0; color: var(--dsw-alias-state-warn-primary); font-size: 13px; line-height: 20px; }
 .asp-dialog-error { margin: 12px 0 0; color: var(--dsw-alias-state-error-primary); font-size: 13px; line-height: 20px; }
 .asp-btn { box-sizing: border-box; display: inline-flex; align-items: center; justify-content: center; gap: 4px; height: 36px; padding: 0 14px; border: none; border-radius: var(--dsw-radius-md); background: transparent; color: var(--dsw-alias-label-primary); font-family: inherit; font-size: 14px; line-height: 22px; cursor: pointer; }
 .asp-btn:disabled { opacity: 0.4; cursor: not-allowed; }
@@ -322,13 +325,20 @@ window.__ModuleLoader__.load({
     /**
      * The `...` menu row for one Session, present for every Session in every
      * filter mode. Selecting it closes the menu and raises the confirmation
-     * dialog instead of deleting immediately.
-     * @param props - owner row props, the menu close hook, the request raiser,
-     *   and localized copy.
+     * dialog instead of deleting immediately. Whether the Session is currently
+     * open or running travels with the request so the dialog can add its
+     * warning; the deletion itself is never refused for a live Session.
+     * @param props - owner row props, the menu close hook, the Session catalog
+     *   selector, the request raiser, and localized copy.
      * @returns the menu row.
      */
-    function PurgeSessionMenuItem({ sessionId, displayTitle, useMenuOpenState, reviewSessionPurge, t }) {
+    function PurgeSessionMenuItem({ sessionId, displayTitle, useMenuOpenState, useSessions, reviewSessionPurge, t }) {
       const [, setMenuOpen] = useMenuOpenState()
+      const inUse = useSessions((state) => {
+        const summary = state.byId[sessionId]
+        if (summary === undefined) return false
+        return summary.running === true || (summary.retainedBy?.mainView ?? 0) > 0
+      })
       return h(
         'div',
         { className: 'asp-menu-item-wrap' },
@@ -341,7 +351,7 @@ window.__ModuleLoader__.load({
             className: 'asp-menu-item asp-menu-danger',
             onClick: () => {
               setMenuOpen(false)
-              reviewSessionPurge({ sessionId, title: displayTitle })
+              reviewSessionPurge({ sessionId, title: displayTitle, inUse })
             }
           },
           h('span', { className: 'asp-menu-item-icon', 'aria-hidden': 'true' }, trashIcon()),
@@ -442,6 +452,9 @@ window.__ModuleLoader__.load({
           h('span', { className: 'asp-dialog-warning-icon', 'aria-hidden': 'true' }, warningIcon()),
           h('p', null, t('dialog.keepAttachments'))
         ),
+        request.inUse === true
+          ? h('p', { className: 'asp-dialog-live', role: 'alert' }, t('dialog.inUse'))
+          : null,
         error === null ? null : h('p', { className: 'asp-dialog-error', role: 'alert' }, error)
       )
     }
@@ -649,7 +662,7 @@ window.__ModuleLoader__.load({
 
       const sessions = state.sessions
       const sizeText = formatBytes(state.totalBytes)
-      const deletableIds = sessions.filter((session) => !session.live).map((session) => session.id)
+      const deletableIds = sessions.map((session) => session.id)
       const confirmIds =
         pending === null ? [] : pending.scope === 'all' ? deletableIds : pending.scope === 'one' ? [pending.id] : []
 
@@ -801,11 +814,8 @@ window.__ModuleLoader__.load({
                             {
                               type: 'button',
                               className: 'asp-button asp-danger',
-                              disabled: busy || pending !== null || session.live,
-                              'aria-label':
-                                session.live === true
-                                  ? t('error.live')
-                                  : `${t('action.delete')}: ${sessionTitle(session)}`,
+                              disabled: busy || pending !== null,
+                              'aria-label': `${t('action.delete')}: ${sessionTitle(session)}`,
                               onClick: () => askOne(session)
                             },
                             t('action.delete')
@@ -860,8 +870,6 @@ window.__ModuleLoader__.load({
       switch (failure?.code) {
         case 'session_not_found':
           return t('error.notFound')
-        case 'session_live':
-          return t('error.live')
         case 'log_not_found':
           return t('error.logNotFound')
         case 'delete_incomplete':

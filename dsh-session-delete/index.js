@@ -71,7 +71,7 @@ function deleteTool(ctx, enqueue) {
     name: TOOL_NAME,
     description:
       'Permanently delete sessions. This cannot be undone: it removes the session log, its projection checkpoint, its reminders, and its workspace entry. ' +
-      'Sessions open in this process are refused; shared attachment objects are kept. `ids` is required.',
+      'A session open in the current view can still be deleted; the view may keep showing it until it is switched away or the process restarts. Shared attachment objects are kept. `ids` is required.',
     parameters: {
       type: 'object',
       properties: {
