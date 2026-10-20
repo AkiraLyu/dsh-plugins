@@ -1,6 +1,6 @@
 {
   "name": "dsh-session-delete",
-  "version": "1.0.1",
+  "version": "1.0.2",
   "private": true,
   "type": "module",
   "description": "Permanently delete a Harness session from the sidebar menu, with an archived-session manager in Settings.",
@@ -17,7 +17,7 @@
   },
   "files": [
     "index.js",
-    "purge.js",
+    "delete.js",
     "client.js",
     "cordis.patch.yml",
     "locale/*.json",

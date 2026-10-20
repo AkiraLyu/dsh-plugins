@@ -19,7 +19,7 @@
  *
  * @module dsh-session-delete
  */
-import { deleteSessions, listArchivedSessions, PurgeError } from './purge.js'
+import { deleteSessions, listArchivedSessions, PurgeError } from './delete.js'
 
 const ROUTE = '/session-delete'
 const LIST_PATH = `${ROUTE}/list`

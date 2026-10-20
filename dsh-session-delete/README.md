@@ -47,6 +47,6 @@ dsh plugin --profile desktop add /path/to/dsh-plugins/dsh-session-delete
 ## 文件结构
 
 - `index.js`：Host 入口，HTTP 路由与 `delete_sessions` 工具。
-- `purge.js`：删除实现，包括日志目录发现、缓存/提醒/工作区清理与删除后校验。
+- `delete.js`：删除实现，包括日志目录发现、缓存/提醒/工作区清理与删除后校验。
 - `client.js`：侧栏菜单项、确认弹窗与设置页。
 - `locale/`：插件管理显示用的标题与描述。

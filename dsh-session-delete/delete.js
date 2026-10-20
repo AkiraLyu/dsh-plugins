@@ -25,7 +25,7 @@
  * backend still reports the Session after the directory was removed, the
  * purge fails instead of reporting a false success.
  *
- * @module dsh-session-delete/purge
+ * @module dsh-session-delete/delete
  */
 import { readdir, rm, stat } from 'node:fs/promises'
 import { homedir } from 'node:os'
@@ -81,6 +81,7 @@ export async function listArchivedSessions(ctx) {
   sessions.sort((left, right) => (right.createdAt ?? 0) - (left.createdAt ?? 0))
 
   return {
+    apiVersion: 2,
     sessions,
     totalBytes: sessions.reduce((total, session) => total + session.sizeBytes, 0)
   }
